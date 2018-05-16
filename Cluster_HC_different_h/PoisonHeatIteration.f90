@@ -404,7 +404,7 @@ subroutine HeatIteration(Nx,Ny,Nz,T,heating, deltat,enviromentalT, error,totalhe
 				elseif (k == 1) then
 					
 					qz1 = -(kkappa+dkappa)*(dT-TT)/(2*ddist)
-					qz0 = newtonh*(enviromentalT-TT)
+					qz0 = newtonh_bot*(enviromentalT-TT)
 					divqz = (qz1-qz0)/ddist
 					nnewT = TT + deltat*(-divqx - divqy - divqz + hheating)/(rrho*ccp)
 					heatfluxz(i,j,k) = (qz0+qz1)/2
@@ -413,7 +413,7 @@ subroutine HeatIteration(Nx,Ny,Nz,T,heating, deltat,enviromentalT, error,totalhe
 
 				elseif (k == Nz) then
 					
-					qz1 = newtonh*(TT-enviromentalT)
+					qz1 = newtonh_top*(TT-enviromentalT)
 					qz0 = -(kkappa+ukappa)*(TT-uT)/(2*udist)
 					divqz = (qz1-qz0)/udist
 					nnewT = TT + deltat*(-divqx - divqy - divqz + hheating)/(rrho*ccp)

@@ -1,9 +1,9 @@
 module constants
 	implicit none
 	
-	double precision, parameter :: q=1.6d-19,eps=8.85d-12, kt = 1.38d-23,newtonh = 5.0d3,langrec = 0.0d0, &
+	double precision, parameter :: q=1.6d-19,eps=8.85d-12, kt = 1.38d-23,langrec = 0.0d0, &
 	Erecombination = 1.6d-19, pi=3.1415926,hplank = 6.62d-34, Rydberg = 1.097d7, &
-	BorRadius = 5.29d-11,hbar = 1.054d-34,tbc=1.0d21
+	BorRadius = 5.29d-11,hbar = 1.054d-34,newtonh_bot = 5.0d3,newtonh_top = 5.0d3
 	double precision, dimension(:,:,:), allocatable :: epsR,rho,cp,kappa,HOMO,LUMO,psigma,nsigma
 	double precision, dimension(:), allocatable :: subgridx, subgridy, subgridz
 	
@@ -123,16 +123,10 @@ module constants
 		shat = sigma/(kt*T)
 		
 		delta = 2*(dlog(shat**2-shat)-0.32663425997828094)/shat**2
-		
 		mu0 = mu0*c1*dexp(-c2*shat**2) !T
-		
 		mu0 = mu0*dexp(0.5*(shat**2-shat)*(2*n*lattice**3)**delta) !n,p
-		
-		
-		mu0 = mu0*dexp(0.44*(shat**1.5 - 2.2)*(dsqrt(1.0d0+0.8d0*(abs(E)*q*lattice/sigma)**2.0d0)-1.0d0))
-		
+		mu0 = mu0*dexp(0.44*(shat**1.5 - 2.2)*(dsqrt(1.0d0+0.8d0*(E*q*lattice/sigma)**2.0d0)-1.0d0))
 		mu = mu0
-		
 ! 		mu = 3.67d-7
 !  		print*, mu,material
 ! 		print*, "here2"

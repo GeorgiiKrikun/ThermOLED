@@ -6,7 +6,7 @@ program main
 	
 	include 'mpif.h'
 	! Control over iterations
-	integer :: number_of_main_iterations = 50000, number_of_phi_iterations=1,number_of_sg_iterations=100,&
+	integer :: number_of_main_iterations = 10000, number_of_phi_iterations=1,number_of_sg_iterations=100,&
 	smalliterationinbig=10000
 	
 	integer :: i,j,k,cut, lbu=249,Nx,Ny,Nz,Ncutx,Ncuty,Ncutz,Ntx,Nty,Ntz,status(MPI_STATUS_SIZE)&
@@ -19,7 +19,7 @@ program main
 	real :: starttime,endtime
 	
 	double precision :: lengthx=100d-9,lengthy=100d-9,lengthz=100d-9,V = 6.0d0,errorphi=1.0d0,errorSG=1.0d0,&
-	maxheating,errorT=1.0d0,totalheating,totaloutflow,timestep = 5.0d-13,ptimestep = 1.0d-20,nnewmax,receive,&
+	maxheating,errorT=1.0d0,totalheating,totaloutflow,timestep = 10.0d-13,ptimestep = 1.0d-20,nnewmax,receive,&
 	iterationTmax=0.0
 	logical :: heatstep = .true.
 	double precision, dimension(:,:,:), allocatable :: heatfluxx,heatfluxy,heatfluxz,&
@@ -35,7 +35,7 @@ program main
         integer :: skipheatiteration = 0
 	
 	call MPI_INIT(ierr)
-	if(ierr .ne. MPI_SUCCESS) then
+	if(ierr.ne.MPI_SUCCESS) then
 		write(*,'(a)') 'ERROR in start: MPI initialisation failed'
 		call MPI_ABORT(MPI_COMM_WORLD,rc,ierr)
 		stop
@@ -94,16 +94,12 @@ program main
 			end do
 			!print*, MINVAL(phi(1,:,1))
 			!call SLEEP(10)
+			phi(:,:,Nz)=0
+			n=1d21
+			p=1d21
 			T=300.0d0
-			do i=1,Nz
-                            phi(:,:,i)=V*(Nz-i)/(Nz-1)
-                            n(:,:,i)=tbc*exp((V-phi(1,1,i))/k*T(1,1,i))
-                            p(:,:,i)=tbc*exp((phi(1,1,i))/k*T(1,1,i))
-                        end do
-			
 		end if
 
-                
 		
 		allocate(subgridx(0:Nx+1), subgridy(0:Ny+1), subgridz(Nz))
 		do i=1,Nx
@@ -396,7 +392,7 @@ program main
 ! 		end if
 ! 	end if
 ! 	call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-        
+
 	call SLEEP(2)
 	if (task_ID .ne. 0) then
 		do i=1,number_of_main_iterations
@@ -480,36 +476,29 @@ program main
                                 end if
                                 
                                 if (i>number_of_sg_iterations+number_of_phi_iterations) then
-                                    !call getHeating(Ntx,Nty,Ntz,currentx,currenty,currentz,n,p,phi,T,heating,maxheating,&
-                                    !    EFx,EFy,EFz,recombination)
-                                    !call MPI_TRIPLE_ROTATE(heating,threadpoints,Ntx,Nty,Ntz)
+                                    call getHeating(Ntx,Nty,Ntz,currentx,currenty,currentz,n,p,phi,T,heating,maxheating,&
+                                        EFx,EFy,EFz,recombination)
+                                    call MPI_TRIPLE_ROTATE(heating,threadpoints,Ntx,Nty,Ntz)
                                     
                                     if  (maxval(kappa) > 0.1) then
                                     
-                                    !    call HeatIteration(Ntx,Nty,Ntz,T,heating,timestep,300.0d0, errorT,totalheating,&
-                                    !            totaloutflow,&
-                                    !            heatfluxx, heatfluxy, heatfluxz)
+                                        call HeatIteration(Ntx,Nty,Ntz,T,heating,timestep,300.0d0, errorT,totalheating,&
+                                                totaloutflow,&
+                                                heatfluxx, heatfluxy, heatfluxz)
                                     else  
-                                    !        call HeatIteration(Ntx,Nty,Ntz,T,heating,100*timestep,300.0d0, errorT,totalheating,&
-                                    !           totaloutflow,&
-                                    !            heatfluxx, heatfluxy, heatfluxz)
+                                            call HeatIteration(Ntx,Nty,Ntz,T,heating,100*timestep,300.0d0, errorT,totalheating,&
+                                                totaloutflow,&
+                                                heatfluxx, heatfluxy, heatfluxz)
                                     end if
                                     
-                                    !call MPI_TRIPLE_ROTATE(T,threadpoints,Ntx,Nty,Ntz)
+                                    call MPI_TRIPLE_ROTATE(T,threadpoints,Ntx,Nty,Ntz)
                                     
                                 end if    
-                                
                         end do
-
-                        
                 end do        
 	end if
-	
-	
-	
+		
 	if (task_ID == 0) then
-                !                 print*, mu(1d15,300d0,0d0,1,1),mu(1d15,300d0,0d0,-1,1),mu(1d15,300d0,0d0,1,2),mu(1d15,300d0,0d0,-1,2)
-                
 		do superiterator = 1,(number_of_main_iterations)
 						
 			do i = 1, Ncutx+1
@@ -658,15 +647,6 @@ program main
 					end do
 				end do
 			end do
-			
-                        do k = 1,Nz
-                            print*, k
-                            print*, mu(p(1,1,k),T(1,1,k),Efz(1,1,k),1,1),p(1,1,k),Efz(1,1,k)
-                            print*, mu(p(1,1,k),T(1,1,k),Efz(1,1,k),1,2),p(1,1,k),Efz(1,1,k)
-                            print*, mu(n(1,1,k),T(1,1,k),Efz(1,1,k),-1,1),n(1,1,k),Efz(1,1,k)
-                            print*, mu(n(1,1,k),T(1,1,k),Efz(1,1,k),-1,2),n(1,1,k),Efz(1,1,k)
-                            print*,
-                        end do
 			call makebackup(phi,EFx,EFy,EFz,n,p,currentx,currenty,currentz,heating,T,superiterator,&
 			relativerecombination,recombination)
 
@@ -680,7 +660,7 @@ program main
 			maxT(0) = maxval(dabs(maxT))
  			print*,superiterator, maxerrorphi(0),maxerrorSG(0), maxerrorT(0),maxT(0)
 			
-			if ((maxerrorphi(0)<1d-10) .and. (maxerrorSG(0)<1d-10)) then
+			if ((maxerrorphi(0)<1d-10) .and. (maxerrorSG(0)<1d-10) .and. (maxerrorT(0)<1d-10)) then
 				call CPU_TIME(endtime)				
 				print*, "CPU_TIME",endtime-starttime
 				call MPI_Abort(MPI_COMM_WORLD, 25,ierr)

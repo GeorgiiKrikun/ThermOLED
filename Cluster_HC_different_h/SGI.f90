@@ -24,7 +24,7 @@ EFx,EFy,EFz,relativerecombination,recombinationperm3)
 	double precision :: up,dp,lp,rp,op,ip,pp
 	double precision :: recombination
 	double precision :: uE,dE,rE,lE,oE,iE,EE
-	double precision :: uT,dT,rT,lT,oT,iT,TT
+	double precision :: uT,dT,rT,lT,oT,iT,TT, tbc=1.0d21
 	double precision :: PhiTop=0.5, PhiBottom=0.5, ymaxtop, ymaxbottom, umaxtop,umaxbottom
 	double precision :: xcurrent0, xcurrent1, ycurrent0, ycurrent1, zcurrent0,zcurrent1
 	double precision :: ppsigma=0, lpsigma=0, rpsigma=0, upsigma=0, dpsigma=0, opsigma=0,ipsigma=0
@@ -262,6 +262,7 @@ EFx,EFy,EFz,relativerecombination,recombinationperm3)
 					DD = (Dc(nn,TT,EFz(i,j,k),-1,layer)+Dc(un,uT,EFz(i,j,k-1),-1,ulayer))/2
 					zcurrent0 = -(DD/udist)*(nn*B(q*(pephi-uephi+SS*(TT-uT)+(nnsigma-unsigma))/(kt*(TT+uT)/2))-&
 					un*B(-q*(pephi-uephi+SS*(TT-uT)+(nnsigma-unsigma))/(kt*(TT+uT)/2)))
+					
 					Ebottom = EFz(i,j,k)
 					ymaxbottom = (q/(Ebottom*16*pi*eps*epsR(i,j,k)))
 					if (Ebottom .ge. 0) then
@@ -367,13 +368,7 @@ EFx,EFy,EFz,relativerecombination,recombinationperm3)
 					ptempcurrenty(i,j,k) = (ycurrent0+ycurrent1)/2
 					ptempcurrentz(i,j,k) = (zcurrent0+zcurrent1)/2
 				end if
-			if (nnew(i,j,k) <0d0) then
-                            nnew=0d0
-                        end if
-                        if (pnew(i,j,k) <0d0) then
-                            pnew=0d0
-                        endif
-			
+					
 			end do	
 		end do		
 	end do			
@@ -418,7 +413,7 @@ EFx,EFy,EFz,relativerecombination,recombinationperm3)
 		gamma = q*max(mu(n,T,E,-1,material),mu(p,T,E,+1,material))/(eps*dielconst)
 		
 		GR = gamma * (n * p - n0*p0)
-		GR=GR*1.0
+
 	end function GR
 
 	double precision function jbackdrift(E,T,p,charge,material)
