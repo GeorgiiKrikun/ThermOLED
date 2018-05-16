@@ -1,0 +1,161 @@
+!module containing procedures to form a grid. Default output is supressed
+module grid 
+	implicit none
+	
+	integer :: Ns, gridprecision,sgcounter=0
+	integer, dimension(:), allocatable :: Nx, Ny, Nz
+	integer	:: mglenx, mgleny, mglenz
+	double precision :: dmglenx, dmgleny, dmglenz
+			
+	type :: subgrid
+		integer ::	Nxd,Nyd,Nzd,Nxsp,Nysp,Nzsp,lenx,leny,lenz,ID,divider,tip = 0
+		double precision, dimension(:), allocatable :: subgridx, subgridy, subgridz
+		integer, dimension(:), allocatable :: irelativex,irelativey,irelativez,erelativex,erelativey,erelativez
+		end type subgrid
+		
+	type(subgrid), dimension(:), allocatable :: subgrids 
+	
+contains
+	
+	subroutine SetStartingValues(Xs,Ys,Zs,Xd,Yd,Zd,numberofsubgrids,i_gridprecision)
+		integer, intent(in) :: Xs,Ys,Zs,numberofsubgrids,i_gridprecision
+		double precision, intent(in) :: Xd,Yd,Zd
+		integer i,j,k
+		mglenx = Xs
+		mgleny = Ys
+		mglenz = Zs
+		dmglenx = Xd
+		dmgleny = Yd
+		dmglenz = Zd
+				
+		allocate(subgrids(0:numberofsubgrids))
+		allocate(subgrids(0)%subgridx(Xs),subgrids(0)%subgridy(Ys),subgrids(0)%subgridz(Zs),&
+		subgrids(0)%irelativex(Xs),subgrids(0)%irelativey(Ys),subgrids(0)%irelativez(Zs),&
+		subgrids(0)%erelativex(Xs),subgrids(0)%erelativey(Ys),subgrids(0)%erelativez(Zs))
+		gridprecision = i_gridprecision
+		
+		
+		do i = 1, Xs
+			subgrids(0)%subgridx(i) = DBLE(i-1)/DBLE(Xs-1)*Xd
+			subgrids(0)%irelativex(i) = (i-1)*gridprecision
+			subgrids(0)%erelativex(i) = (i-1)*gridprecision
+		end do
+		
+		do j = 1, Ys
+			subgrids(0)%subgridy(j) = DBLE(j-1)/DBLE(Ys-1)*Yd
+			subgrids(0)%irelativey(j) = (j-1)*gridprecision
+			subgrids(0)%erelativey(j) = (j-1)*gridprecision
+		end do
+		
+		do k = 1, Zs
+			subgrids(0)%subgridz(k) = DBLE(k-1)/DBLE(Zs-1)*Zd
+			subgrids(0)%irelativez(k) = (k-1)*gridprecision
+			subgrids(0)%erelativez(k) = (k-1)*gridprecision
+		end do
+		
+		subgrids(0)%Nxsp = 0
+		subgrids(0)%Nysp = 0
+		subgrids(0)%Nzsp = 0
+		
+		subgrids(0)%Nxd = Xs
+		subgrids(0)%Nyd = Ys
+		subgrids(0)%Nzd = Zs
+		
+		subgrids(0)%lenx = Xs
+		subgrids(0)%leny = Ys
+		subgrids(0)%lenz = Zs
+		
+		subgrids(0)%ID = 0
+		
+		Ns = numberofsubgrids
+		allocate(Nx(0:Ns),Ny(0:Ns),Nz(0:Ns))
+		Nx(0) = Xs
+		Ny(0) = Ys
+		Nz(0) = Zs
+		
+	end subroutine SetStartingValues
+	
+	subroutine AddSubgrid(Xsp,Ysp,Zsp,Xep,Yep,Zep,modx,mody,modz,powerx,powery,powerz&
+		,directionx,directiony,directionz)
+		integer, intent(in) :: Xsp,Ysp,Zsp,Xep,Yep,Zep,modx,mody,modz,powerx,powery,powerz&
+		,directionx,directiony,directionz
+		integer :: i,j,k
+		sgcounter = sgcounter + 1
+		call OneDimensionalGrid(Xsp, Xep, modx, powerx, directionx)
+		call OneDimensionalGrid(Ysp, Yep, mody, powery, directiony)
+		call OneDimensionalGrid(Zsp, Zep, modz, powerz, directionz)
+		
+	end subroutine AddSubgrid
+	
+	subroutine OneDimensionalGrid(Xsp, Xep, modx, powerx, directionx,lengths,lengthi,lengthe,&
+		returnsubgrid,returnirelative,returnerelative)
+		integer, intent(in) :: Xsp,Xep,modx,powerx,directionx
+		integer :: i
+		integer, intent(out) :: lengths, lengthi, lengthe
+		double precision, dimension(:), allocatable :: subgridx
+		integer, dimension(:), allocatable :: irelativex,erelativex
+		double precision, dimension(:), allocatable,intent(out) :: returnsubgrid
+		integer, dimension(:), allocatable,intent(out) :: returnirelative,returnerelative
+		
+		if (directionx == -1) then
+			if ((Xep-Xsp) > 1) then
+				print*, "X nonlinear grid with wrong size, number: ", sgcounter
+				return
+			end if
+			allocate(subgridx(powerx+2), subgrids(sgcounter)%erelativex(powerx+2), &
+			subgrids(sgcounter)%irelativex(powerx+2))
+			
+			subgrids(sgcounter)%subgridx(1) = (DBLE(Xsp-1))/DBLE(mglenx-1)*dmglenx
+			subgrids(sgcounter)%erelativex(1) = (Xsp-1)*gridprecision
+			subgrids(sgcounter)%irelativex(1) = 1
+			subgrids(sgcounter)%subgridx(powerx+2) = DBLE(Xep-1)/DBLE(mglenx-1)*dmglenx
+			subgrids(sgcounter)%erelativex(powerx+2) = (Xep-1)*gridprecision
+			subgrids(sgcounter)%irelativex(powerx+2) = powerx+2
+			
+			do i = 2,powerx+1
+				subgrids(sgcounter)%subgridx(i) = (DBLE(Xsp-1)+DBLE(1.0d0/DBLE(modx**(powerx-i+2))))/(mglenx-1)*dmglenx
+				subgrids(sgcounter)%erelativex(i) = (Xsp-1)*gridprecision+gridprecision/modx**(powerx-i+2)
+				subgrids(sgcounter)%irelativex(i) = i
+			end do
+			
+		end if
+		
+		if (directionx == 1) then
+			if ((Xep-Xsp) > 1) then
+				print*, "X nonlinear grid with wrong size, number: ", sgcounter
+				return
+			end if
+			allocate(subgrids(sgcounter)%subgridx(powerx+2), subgrids(sgcounter)%erelativex(powerx+2), &
+			subgrids(sgcounter)%irelativex(powerx+2))
+			
+			subgrids(sgcounter)%subgridx(1) = DBLE(Xsp-1)/DBLE(mglenx-1)*dmglenx
+			subgrids(sgcounter)%erelativex(1) = (Xsp-1)*gridprecision
+			subgrids(sgcounter)%irelativex(1) = 1
+			subgrids(sgcounter)%subgridx(powerx+2) = DBLE(Xep-1)/DBLE(mglenx-1)*dmglenx
+			subgrids(sgcounter)%erelativex(powerx+2) = (Xep-1)*gridprecision
+			subgrids(sgcounter)%irelativex(powerx+2) = powerx+2
+			
+			do i = 2,powerx+1
+				subgrids(sgcounter)%subgridx(i) = (DBLE(Xsp)-DBLE(1.0d0/DBLE(modx**(i-1))))/(mglenx-1)*dmglenx
+				subgrids(sgcounter)%erelativex(i) = (Xsp)*gridprecision-gridprecision/modx**(i-1)
+				subgrids(sgcounter)%irelativex(i) = i
+			end do
+			
+		end if
+		
+		if (directionx == 0) then
+			allocate(subgrids(sgcounter)%subgridx(modx*(Xep-Xsp)+1), subgrids(sgcounter)%erelativex(modx*(Xep-Xsp)+1), &
+			subgrids(sgcounter)%irelativex(modx*(Xep-Xsp)+1))
+			
+			do i=1,modx*(Xep-Xsp)+1
+				subgrids(sgcounter)%subgridx(i) = (DBLE(Xsp-1) + DBLE(i-1)/DBLE(modx))/(mglenx-1)*dmglenx
+				subgrids(sgcounter)%erelativex(i) = (Xsp-1)*gridprecision + (i-1)*gridprecision/modx
+				subgrids(sgcounter)%irelativex(i) = i
+			end do
+		end if
+	
+	end subroutine OneDimensionalGrid
+	
+end module grid
+		
+	

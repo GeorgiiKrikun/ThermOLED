@@ -1,0 +1,58 @@
+#!/bin/bash
+set -o nounset
+set -o errexit
+
+DefaultProgramName='a.out' #here u can change name of executable
+
+clear
+echo "Welcome!"
+echo "This is the script to launch 3D Grid OLED modeling in parallel mode"
+
+gfortran -c Default/Defaults.f90 -o Defaults.o
+gfortran Defaults.o -o Default/getdefaults
+rm Defaults.o
+
+cd Default
+numbers=`./getdefaults`
+cd ..
+
+Nx=`echo $numbers | cut -f1 -d' '`
+Ny=`echo $numbers | cut -f2 -d' '`
+Nz=`echo $numbers | cut -f3 -d' '`
+NumberOfThreads=`echo $numbers | cut -f4 -d' '`
+MaximumThreads=`echo $numbers | cut -f5 -d' '`
+Ncutx=`echo $numbers | cut -f6 -d' '`
+Ncuty=`echo $numbers | cut -f7 -d' '`
+Ncutz=`echo $numbers | cut -f8 -d' '`
+
+echo 'Default grid refinement settings are:'
+echo 'Nx = '$Nx' Ncutx = '$Ncutx
+echo 'Ny = '$Ny' Ncuty = '$Ncuty
+echo 'Nz = '$Nz' Ncutz = '$Ncutz
+echo 'Executable name:'$DefaultProgramName
+echo
+
+
+echo "Maximum number of threads for current setup is "$MaximumThreads
+echo 'Current default number of threads is '$NumberOfThreads
+
+echo 'Please type q to quit execution if not happy with defaults'
+read -n1 -s
+
+
+if [[ "$REPLY" == "q" ]]
+then
+	echo 'You can change defaults in default folder'
+else
+	rm $DefaultProgramName	
+	make all
+	mpirun -np $NumberOfThreads $DefaultProgramName $Nx $Ny $Nz $Ncutx $Ncuty $Ncutz
+fi
+
+
+
+
+
+
+
+
