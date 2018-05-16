@@ -1,4 +1,0 @@
-#pmu0 psigma(in kT units) LUMO nmu0 nsigma(in kT units) HOMO lattice epsR rho cp kappa matbegin matend 1.0d+4 2.0d0 -0.3d0 1.0d+4 3.0d0 -0.3d0 1.0d-9 5.0d0 2490.0d0 800.0d0 0.5d0 50.5d-9 100.5d-9
-1	
-1.0d+4 2.0d0 0.0d0 1.0d+4 2.0d0 0.0d0 1.0d-9 5.0d0 2490.0d0 800.0d0 0.5d0 0.0d-9 100.5d-9
-
